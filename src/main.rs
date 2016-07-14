@@ -179,6 +179,8 @@ struct Prediction {
 }
 
 fn main() {
+    use std::sync::mpsc::channel;
+    use std::thread;
     use clap::{App, Arg};
 
     let arg_matches = App::new("travel_ura")
@@ -190,20 +192,30 @@ fn main() {
 
     let base_url = "http://ivu.aseag.de/interfaces/ura/instant_V1?";
 
-    let stops: Vec<&str> = arg_matches.values_of("STOP").unwrap().collect();
-    //println!("listing busses visiting stops {}", stops.join(", "));
-    let results = stops.iter().map(|stop| {
-        match Request::with_stop_point_name(stop.to_string()).send(base_url.to_string()) {
-            Ok(results) => {
-                //println!("{}: {:#?}", stop, results);
-                results
+    // parse arguments
+    let stops: Vec<String> = arg_matches.values_of("STOP").unwrap().map(|s| s.to_string()).collect();
+
+    // fire requests
+    let request_rxs: Vec<_> = stops.into_iter().map(|stop| {
+        let (tx, rx) = channel();
+        thread::spawn(move || {
+            tx.send(Request::with_stop_point_name(stop).send(base_url.to_string())).unwrap();
+        });
+        rx
+    }).collect();
+
+    // collect results
+    let results: Vec<_> = request_rxs.iter().map(|rx| {
+        match rx.recv().unwrap() {
+            Ok(res) => {
+                res
             },
             Err(error) => {
                 println!("error: {:?}", error);
                 std::process::exit(1);
             }
         }
-    });
+    }).collect();
     let intersection = results.intersect(true).unwrap();
     println!("{}", intersection);
 }
