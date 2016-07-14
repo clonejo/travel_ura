@@ -187,13 +187,18 @@ fn main() {
         .about("Queries URA live bus APIs, like the one of Transport for London (TfL)")
         .arg(Arg::with_name("STOP")
              .takes_value(true)
-             .multiple(true))
+             .multiple(true)
+             .required(true))
+        .arg(Arg::with_name("unordered")
+             .short("O")
+             .help("do not filter out busses which do not visit the stops in the given order"))
         .get_matches();
 
     let base_url = "http://ivu.aseag.de/interfaces/ura/instant_V1?";
 
     // parse arguments
     let stops: Vec<String> = arg_matches.values_of("STOP").unwrap().map(|s| s.to_string()).collect();
+    let ordered = !arg_matches.is_present("unordered");
 
     // fire requests
     let request_rxs: Vec<_> = stops.into_iter().map(|stop| {
@@ -216,7 +221,7 @@ fn main() {
             }
         }
     }).collect();
-    let intersection = results.intersect(true).unwrap();
+    let intersection = results.intersect(ordered).unwrap();
     println!("{}", intersection);
 }
 
