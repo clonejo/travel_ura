@@ -191,6 +191,7 @@ fn main() {
              .required(true))
         .arg(Arg::with_name("unordered")
              .short("O")
+             .long("unordered")
              .help("do not filter out busses which do not visit the stops in the given order"))
         .get_matches();
 
@@ -222,6 +223,6 @@ fn main() {
         }
     }).collect();
     let intersection = results.intersect(ordered).unwrap();
-    println!("{}", intersection);
+    print!("{}", intersection);
 }
 
