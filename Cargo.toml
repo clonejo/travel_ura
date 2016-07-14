@@ -1,0 +1,10 @@
+[package]
+name = "travel_ura"
+version = "0.1.0"
+authors = ["clonejo <clonejo@shakik.de>"]
+
+[dependencies]
+clap = "2.9.2"
+hyper = "0.9.10"
+serde_json = "0.7.4"
+chrono = "0.2.22"
