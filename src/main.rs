@@ -109,13 +109,30 @@ struct Predictions {
     predictions: Vec<Prediction>
 }
 
+impl Predictions {
+    fn format(&self, compact: bool) -> String {
+        let now = self.time;
+        let mut out = String::new();
+        for p in self.predictions.iter() {
+            let line = match compact {
+                false => {
+                    format!("{:>3}min {:>4} {}\n",
+                            (p.estimated_time - now).num_minutes(), p.line_name, p.destination_text)
+                },
+                true => {
+                    format!("{}min {} {}\n",
+                            (p.estimated_time - now).num_minutes(), p.line_name, p.destination_text)
+                }
+            };
+            out.push_str(line.as_str());
+        }
+        out
+    }
+}
+
 impl Display for Predictions {
     fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
-        let now = self.time;
-        for p in self.predictions.iter() {
-            try!(writeln!(f, "{:>3}min {:>4} {}",
-                          (p.estimated_time - now).num_minutes(), p.line_name, p.destination_text));
-        }
+        try!(write!(f, "{}", self.format(false)));
         Ok(())
     }
 }
@@ -189,6 +206,10 @@ fn main() {
              .takes_value(true)
              .multiple(true)
              .required(true))
+        .arg(Arg::with_name("compact")
+             .short("c")
+             .long("compact")
+             .help("compact output"))
         .arg(Arg::with_name("unordered")
              .short("O")
              .long("unordered")
@@ -199,6 +220,7 @@ fn main() {
 
     // parse arguments
     let stops: Vec<String> = arg_matches.values_of("STOP").unwrap().map(|s| s.to_string()).collect();
+    let compact_output = arg_matches.is_present("compact");
     let ordered = !arg_matches.is_present("unordered");
 
     // fire requests
@@ -223,6 +245,6 @@ fn main() {
         }
     }).collect();
     let intersection = results.intersect(ordered).unwrap();
-    print!("{}", intersection);
+    print!("{}", intersection.format(compact_output));
 }
 
