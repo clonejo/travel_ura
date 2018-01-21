@@ -117,11 +117,13 @@ impl Predictions {
             let line = match compact {
                 false => {
                     format!("{:>3}min {:>4} {}\n",
-                            (p.estimated_time - now).num_minutes(), p.line_name, p.destination_text)
+                            (p.estimated_time.signed_duration_since(now)).num_minutes(),
+                             p.line_name, p.destination_text)
                 },
                 true => {
                     format!("{}min {} {}\n",
-                            (p.estimated_time - now).num_minutes(), p.line_name, p.destination_text)
+                            (p.estimated_time.signed_duration_since(now)).num_minutes(),
+                             p.line_name, p.destination_text)
                 }
             };
             out.push_str(line.as_str());
